@@ -1,0 +1,15 @@
+# Виртуальные окружения
+venv/
+env/
+.venv/
+
+# Питон
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Прочие
+.DS_Store
+*.log
+*.sqlite3
