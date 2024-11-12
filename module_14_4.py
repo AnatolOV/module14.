@@ -7,7 +7,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 initiate_db()
-api = '7701580394:AAHk88GGRw8Sh7vqi3MvYqa1V1FpKZcYEXc'
+api = '7701580394:AA'
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
 kb = ReplyKeyboardMarkup(resize_keyboard=True)
