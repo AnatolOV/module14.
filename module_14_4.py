@@ -7,7 +7,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 initiate_db()
-api = '7701580394:AA'
+api = '7701580394:AAHk88GGRw8Sh7vqi3MvYqa1V1FpKZcY'
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
 kb = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -51,6 +51,7 @@ async def get_buying_list(message):
         await message.answer_photo(photo=open(photo_path, 'rb'),
                                    caption=f'Название: {el[1]} | Описание: описание {el[2]} | Цена: {el[3]}',
                                    reply_markup=kbInline1)
+        count_+=1
 
 
 @dp.callback_query_handler(text='product_buying')
