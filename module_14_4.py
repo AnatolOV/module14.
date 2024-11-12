@@ -1,10 +1,12 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import asyncio
+from crud_functions import initiate_db, get_all_products
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
+initiate_db()
 api = '7701580394:AAHk88GGRw8Sh7vqi3MvYqa1V1FpKZcYEXc'
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -23,6 +25,7 @@ kbInline1 = InlineKeyboardMarkup()
 buttonInlChoise = InlineKeyboardButton(text="Выберите продукт для покупки:", callback_data='product_buying')
 kbInline1.add(buttonInlChoise)
 
+
 class UserState(StatesGroup):
     sex = State()
     age = State()
@@ -38,9 +41,16 @@ async def start(message):
 
 @dp.message_handler(text='Купить')
 async def get_buying_list(message):
-    for number in range(1,5):
-        photo_path = f'images/product{number}.png'
-        await message.answer_photo(photo=open(photo_path, 'rb'),caption=f'Название: Product{number} | Описание: описание {number} | Цена: {number*100}', reply_markup = kbInline1 )
+    products = get_all_products()
+    count_ = 1
+    product_list = []
+    for product in products:
+        product_list.append(product)
+    for el in product_list:
+        photo_path = f'images/product{count_}.png'
+        await message.answer_photo(photo=open(photo_path, 'rb'),
+                                   caption=f'Название: {el[1]} | Описание: описание {el[2]} | Цена: {el[3]}',
+                                   reply_markup=kbInline1)
 
 
 @dp.callback_query_handler(text='product_buying')
@@ -51,13 +61,13 @@ async def send_confirm_message(call):
 
 @dp.message_handler(text='Рассчитать')
 async def main_menu(message):
-    await message.answer(text='Выберите опцию:', reply_markup = kbInline)
+    await message.answer(text='Выберите опцию:', reply_markup=kbInline)
+
 
 @dp.callback_query_handler(text='formulas')
 async def get_formulas(call):
     await call.message.answer("Калории рассчитываются по формулам Миффлина-Сан Жеора.")
     await call.answer()
-
 
 
 # @dp.message_handler(text='Рассчитать')
@@ -66,6 +76,7 @@ async def set_sex(call):
     await call.message.answer('Введите свой пол: Муж или Жен')
     await UserState.sex.set()
     await call.answer()
+
 
 @dp.message_handler(text='Информация')
 async def inform(message):
@@ -81,7 +92,6 @@ async def set_age(message, state):
 
 
 @dp.message_handler(state=UserState.age)
-
 async def set_growth(message, state):
     await state.update_data(age=message.text)
     await message.answer('Введите свой рост:')
