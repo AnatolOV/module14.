@@ -1,22 +1,24 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import asyncio
-from crud_functions import initiate_db, get_all_products
+from crud_functions import initiate_db, get_all_products, add_user, is_included
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 initiate_db()
-api = '7701580394:AAHk88GGRw8Sh7vqi3MvYqa1V1FpKZcYEXc'
+api = '7'
 bot = Bot(token=api)
 dp = Dispatcher(bot, storage=MemoryStorage())
 kb = ReplyKeyboardMarkup(resize_keyboard=True)
 button1 = KeyboardButton(text='Рассчитать')
 button2 = KeyboardButton(text='Информация')
 button3 = KeyboardButton(text='Купить')
+button4 = KeyboardButton(text='Регистрация')
 
 kb.add(button1, button2)
-kb.add(button3)
+kb.add(button3, button4)
+
 kbInline = InlineKeyboardMarkup()
 buttonInlKalories = InlineKeyboardButton(text='Рассчитать норму калорий', callback_data='calories')
 buttonInlFormula = InlineKeyboardButton(text='Формулы расчёта', callback_data='formulas')
@@ -33,10 +35,56 @@ class UserState(StatesGroup):
     weight = State()
 
 
+class RegistrationState(StatesGroup):
+    username = State()
+    email = State()
+    age = State()
+
+
 @dp.message_handler(commands=['start'])
 async def start(message):
     await message.answer('Привет! Я помогу тебе рассчитать ежедневную норму калорий'
                          , reply_markup=kb)
+
+
+@dp.message_handler(text='Регистрация')
+async def sing_up(message):
+    await message.answer("Введите имя пользователя (только латинский алфавит):")
+    await RegistrationState.username.set()  # Устанавливаем состояние username.
+
+
+@dp.message_handler(state=RegistrationState.username)
+async def set_username(message, state):
+    username = message.text
+    if not is_included(username):
+        # print('username: ', username)
+        await state.update_data(username=username)  # Сохраняем имя пользователя в состоянии
+        await RegistrationState.email.set()  # Устанавливаем следующее состояние на email
+        await message.answer("Введите свой email:")
+    else:
+        await message.answer("Пользователь существует, введите другое имя:")
+        await RegistrationState.username.set()  # Снова устанавливаем состояние на username
+
+
+@dp.message_handler(state=RegistrationState.email)
+async def set_email(message, state):
+    email = message.text
+    await state.update_data(email=message.text)
+    await message.answer("Введите свой возраст:")
+    await RegistrationState.age.set()
+
+
+@dp.message_handler(state=RegistrationState.age)
+async def set_age(message, state):
+    age = message.text
+    # print('age: ', age)
+    await state.update_data(age=message.text)
+    user_data = await state.get_data()
+    # print(user_data['username'])
+    add_user(user_data['username'], user_data['email'], user_data['age'])
+    await message.answer("Вы успешно зарегистрированы!")
+    # Завершаем состояние
+    await state.finish()
 
 
 @dp.message_handler(text='Купить')
@@ -51,7 +99,7 @@ async def get_buying_list(message):
         await message.answer_photo(photo=open(photo_path, 'rb'),
                                    caption=f'Название: {el[1]} | Описание: описание {el[2]} | Цена: {el[3]}',
                                    reply_markup=kbInline1)
-        count_+=1
+        count_ += 1
 
 
 @dp.callback_query_handler(text='product_buying')

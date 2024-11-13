@@ -13,6 +13,15 @@ def initiate_db():
         price INTEGER NOT NULL
     );
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Users (
+            id INTEGER PRIMARY KEY,
+            username TEXT NOT NULL,
+            email TEXT NOT NULL,
+            age INTEGER NOT NULL,
+            balance INTEGER NOT NULL
+        );
+        ''')
 
     # Добавление нескольких записей для демонстрации
     products_to_insert = [
@@ -32,6 +41,33 @@ def initiate_db():
 
     connection.commit()
     connection.close()
+# initiate_db()
+# def add_user(username, email, age):
+
+def add_user(username, email, age):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    try:
+        cursor.execute('''
+        INSERT INTO Users (username, email, age, balance) 
+        VALUES (?, ?, ?, ?)
+        ''', (username, email, age, 1000))
+        connection.commit()
+        print("Пользователь добавлен успешно.")
+    except sqlite3.IntegrityError:
+        print("Ошибка: Пользователь уже существует.")
+    connection.close()
+
+def is_included(username):
+    connection = sqlite3.connect('database.db')
+    cursor = connection.cursor()
+    cursor.execute('''
+    SELECT EXISTS(SELECT 1 FROM Users WHERE username = ?)
+    ''', (username,))
+
+    return cursor.fetchone()[0] == 1
+    connection.close()
+
 
 def get_all_products():
     connection = sqlite3.connect('database.db')
@@ -39,6 +75,5 @@ def get_all_products():
     products = cursor.execute("SELECT * FROM Products").fetchall()
     connection.close()
     return products
-
 
 # print(get_all_products())
